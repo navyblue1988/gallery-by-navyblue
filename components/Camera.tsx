@@ -39,12 +39,12 @@ export const Camera: React.FC<CameraProps> = ({ onPhotoSelect, isProcessing }) =
       <AnimatePresence>
         {isProcessing && (
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: -180, opacity: 1 }}
-            exit={{ y: -220, opacity: 0, scale: 0.9, transition: { duration: 0.4 } }}
-            transition={{ duration: 2.5, ease: "linear" }}
+            initial={{ y: 100, opacity: 0, scale: 0.95 }} // Start lower (inside camera)
+            animate={{ y: -240, opacity: 1, scale: 1 }} // Move up and out
+            exit={{ y: -280, opacity: 0, scale: 0.9, transition: { duration: 0.4 } }}
+            transition={{ duration: 2.2, ease: "easeOut" }}
             className="absolute z-0 w-56 h-64 bg-white shadow-2xl pointer-events-none flex flex-col p-3 pb-10 border border-gray-300"
-            style={{ bottom: '60%' }}
+            style={{ bottom: '80px' }} // Anchor tightly behind the camera body
           >
             <div className="w-full h-full bg-black/90 animate-pulse" />
           </motion.div>

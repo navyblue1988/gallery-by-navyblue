@@ -6,9 +6,15 @@ interface GalleryWallProps {
   photos: Photo[];
   onUpdatePhoto: (id: string, updates: Partial<Photo>) => void;
   onBringToFront: (id: string) => void;
+  onDeletePhoto: (id: string) => void;
 }
 
-export const GalleryWall: React.FC<GalleryWallProps> = ({ photos, onUpdatePhoto, onBringToFront }) => {
+export const GalleryWall: React.FC<GalleryWallProps> = ({ 
+  photos, 
+  onUpdatePhoto, 
+  onBringToFront,
+  onDeletePhoto
+}) => {
   return (
     <div className="w-full h-full relative overflow-hidden">
       {photos.length === 0 && (
@@ -24,6 +30,7 @@ export const GalleryWall: React.FC<GalleryWallProps> = ({ photos, onUpdatePhoto,
           photo={photo} 
           onUpdate={(updates) => onUpdatePhoto(photo.id, updates)}
           onFocus={() => onBringToFront(photo.id)}
+          onDelete={() => onDeletePhoto(photo.id)}
         />
       ))}
     </div>

@@ -10,6 +10,7 @@ export interface Photo {
   y: number;
   scale: number;
   zIndex: number;
+  isLiked?: boolean;
 }
 
 export interface GemniResponse {

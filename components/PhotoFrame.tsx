@@ -1,15 +1,21 @@
 import React, { useRef, useState } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { Photo } from '../types';
-import { Loader2, Maximize2 } from 'lucide-react';
+import { Loader2, Maximize2, X } from 'lucide-react';
 
 interface PhotoFrameProps {
   photo: Photo;
   onUpdate: (updates: Partial<Photo>) => void;
   onFocus: () => void;
+  onDelete: () => void;
 }
 
-export const PhotoFrame: React.FC<PhotoFrameProps> = ({ photo, onUpdate, onFocus }) => {
+export const PhotoFrame: React.FC<PhotoFrameProps> = ({ 
+  photo, 
+  onUpdate, 
+  onFocus, 
+  onDelete
+}) => {
   const controls = useDragControls();
   const [isResizing, setIsResizing] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -19,9 +25,6 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({ photo, onUpdate, onFocus
   
   // Default dimensions (before scaling)
   const baseWidth = isLandscape ? 320 : 260;
-  // Height calculation: 
-  // Landscape: 320px width -> ~20px padding sides -> Image width 280. Image height ~220. Text area ~50. Total ~310.
-  // Portrait: 260px width -> ~20px padding sides -> Image width 220. Image height ~290. Text area ~50. Total ~380.
   const baseHeight = isLandscape ? 310 : 380;
   
   // Scale constraints
@@ -97,6 +100,19 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({ photo, onUpdate, onFocus
       {/* Shadow Container & White Card */}
       <div className="w-full h-full bg-[#fdfdfd] shadow-[0_15px_35px_-5px_rgba(0,0,0,0.5)] transition-shadow duration-300 hover:shadow-[0_25px_50px_-12px_rgba(255,255,255,0.1)] relative flex flex-col p-3 pb-2">
         
+        {/* Delete Button - Visible on Hover */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+          className="absolute -top-3 -right-3 w-6 h-6 bg-black/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 z-50 shadow-md cursor-pointer"
+          title="Remove Photo"
+        >
+          <X className="w-3 h-3" />
+        </button>
+
         {/* The Image Area - Flex grow to fill available space leaving room for text at bottom */}
         <div className="relative w-full bg-gray-100 overflow-hidden flex-1 border border-black/5">
           <div className="w-full h-full relative grayscale group-hover:grayscale-0 transition-all duration-700">
@@ -113,15 +129,21 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({ photo, onUpdate, onFocus
         </div>
 
         {/* The Caption Area (Bottom White Space) */}
-        <div className="w-full h-12 flex items-center justify-center shrink-0">
+        <div className="w-full h-12 flex items-center justify-center shrink-0 relative">
           {photo.isLoadingCaption ? (
             <div className="flex items-center gap-2 text-gray-400 text-sm">
               <Loader2 className="w-3 h-3 animate-spin text-black" />
             </div>
           ) : (
-            <p className="typewriter text-black/85 text-[11px] tracking-[0.15em] text-center leading-tight uppercase select-none pt-1">
-              {photo.caption}
-            </p>
+            <input 
+              type="text"
+              value={photo.caption || ''}
+              onChange={(e) => onUpdate({ caption: e.target.value })}
+              className="typewriter w-full bg-transparent text-black/85 text-[11px] tracking-[0.15em] text-center leading-tight uppercase focus:outline-none focus:bg-gray-50 placeholder-gray-300 pt-1 px-2"
+              placeholder="TYPE CAPTION..."
+              onClick={(e) => e.stopPropagation()} // Stop drag when clicking input
+              onPointerDown={(e) => e.stopPropagation()} // Stop drag start
+            />
           )}
         </div>
 
@@ -130,7 +152,7 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({ photo, onUpdate, onFocus
 
         {/* Resize Handle - Only visible on hover/drag */}
         <div 
-          className="absolute -bottom-4 -right-4 w-8 h-8 bg-white/10 hover:bg-white/30 rounded-full backdrop-blur-sm flex items-center justify-center cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute -bottom-4 -right-4 w-8 h-8 bg-white/10 hover:bg-white/30 rounded-full backdrop-blur-sm flex items-center justify-center cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-50"
           onPointerDown={handleResizeStart}
         >
           <Maximize2 className="w-4 h-4 text-white/70" />

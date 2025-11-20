@@ -23,7 +23,8 @@ const App: React.FC = () => {
         x: p.x ?? Math.random() * (window.innerWidth - 300),
         y: p.y ?? Math.random() * (window.innerHeight - 400),
         scale: p.scale ?? 1,
-        zIndex: p.zIndex ?? 1
+        zIndex: p.zIndex ?? 1,
+        isLiked: p.isLiked ?? false
       }));
       setPhotos(migrated);
       
@@ -80,7 +81,8 @@ const App: React.FC = () => {
         x: initialX,
         y: initialY,
         scale: 1,
-        zIndex: newZIndex
+        zIndex: newZIndex,
+        isLiked: false
       };
 
       // Add to gallery immediately
@@ -121,6 +123,10 @@ const App: React.FC = () => {
     updatePhoto(id, { zIndex: newZ });
   };
 
+  const deletePhoto = (id: string) => {
+    setPhotos(prev => prev.filter(p => p.id !== id));
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden font-sans selection:bg-white selection:text-black">
       {/* Header - Handwritten Retro */}
@@ -141,6 +147,7 @@ const App: React.FC = () => {
           photos={photos} 
           onUpdatePhoto={updatePhoto}
           onBringToFront={bringToFront}
+          onDeletePhoto={deletePhoto}
         />
       </main>
 

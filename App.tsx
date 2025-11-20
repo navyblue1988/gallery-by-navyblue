@@ -10,6 +10,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const App: React.FC = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [highestZIndex, setHighestZIndex] = useState(100);
 
   // Load photos from local storage on mount
@@ -52,17 +53,23 @@ const App: React.FC = () => {
   };
 
   const handlePhotoSelect = async (file: File) => {
+    // 1. Show in camera immediately
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewImage(objectUrl);
     setIsProcessing(true);
 
     try {
-      // 1. Create local URL for immediate display
-      const objectUrl = URL.createObjectURL(file);
+      // 2. Start background tasks
+      const orientationPromise = getImageOrientation(objectUrl);
+      const base64Promise = fileToGenerativePart(file);
       
-      // 2. Detect Orientation
-      const orientation = await getImageOrientation(objectUrl);
+      // 3. Wait for the camera "printing" animation (2.2s)
+      // This ensures the photo doesn't appear on the wall until it ejects from the camera
+      await new Promise(resolve => setTimeout(resolve, 2200));
       
-      // 3. Prepare base64 for Gemini
-      const base64Data = await fileToGenerativePart(file);
+      // 4. Prepare Photo Data
+      const orientation = await orientationPromise;
+      const base64Data = await base64Promise;
 
       // Calculate random initial position (centered-ish)
       const initialX = (window.innerWidth / 2) - 150 + (Math.random() * 100 - 50);
@@ -70,7 +77,6 @@ const App: React.FC = () => {
       const newZIndex = highestZIndex + 1;
       setHighestZIndex(newZIndex);
 
-      // 4. Create initial photo object (loading state)
       const newPhoto: Photo = {
         id: generateId(),
         url: objectUrl,
@@ -85,30 +91,32 @@ const App: React.FC = () => {
         isLiked: false
       };
 
-      // Add to gallery immediately
+      // 5. Add to Gallery Wall (Visual handoff)
       setPhotos(prev => [...prev, newPhoto]);
-
-      // 5. Get Caption from Gemini
-      // Delay to sync with camera animation
-      await new Promise(resolve => setTimeout(resolve, 2200));
       
-      const caption = await generateImageCaption(base64Data);
+      // Stop camera animation (it will fade out)
+      setIsProcessing(false);
 
-      // 6. Update photo with caption
-      setPhotos(prev => prev.map(p => 
-        p.id === newPhoto.id 
-          ? { ...p, caption: caption.toLowerCase(), isLoadingCaption: false }
-          : p
-      ));
+      // 6. Fetch Caption (in background after photo is placed)
+      try {
+        const caption = await generateImageCaption(base64Data);
+        
+        setPhotos(prev => prev.map(p => 
+          p.id === newPhoto.id 
+            ? { ...p, caption: caption.toLowerCase(), isLoadingCaption: false }
+            : p
+        ));
+      } catch (captionError) {
+        console.warn("Caption generation failed", captionError);
+        setPhotos(prev => prev.map(p => 
+          p.id === newPhoto.id 
+            ? { ...p, caption: "untitled", isLoadingCaption: false }
+            : p
+        ));
+      }
 
     } catch (error) {
       console.error("Failed to process photo", error);
-      setPhotos(prev => prev.map(p => 
-        p.isLoadingCaption 
-          ? { ...p, caption: "contrast", isLoadingCaption: false }
-          : p
-      ));
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -157,7 +165,11 @@ const App: React.FC = () => {
          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent h-48 mt-auto top-auto bottom-0 pointer-events-none"></div>
          
          <div className="pointer-events-auto w-full flex justify-center pb-4 scale-90 md:scale-100 origin-bottom">
-            <Camera onPhotoSelect={handlePhotoSelect} isProcessing={isProcessing} />
+            <Camera 
+              onPhotoSelect={handlePhotoSelect} 
+              isProcessing={isProcessing} 
+              previewUrl={previewImage}
+            />
          </div>
       </footer>
     </div>

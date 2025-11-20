@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface CameraProps {
   onPhotoSelect: (file: File) => void;
   isProcessing: boolean;
+  previewUrl: string | null;
 }
 
-export const Camera: React.FC<CameraProps> = ({ onPhotoSelect, isProcessing }) => {
+export const Camera: React.FC<CameraProps> = ({ onPhotoSelect, isProcessing, previewUrl }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -46,7 +47,23 @@ export const Camera: React.FC<CameraProps> = ({ onPhotoSelect, isProcessing }) =
             className="absolute z-0 w-56 h-64 bg-white shadow-2xl pointer-events-none flex flex-col p-3 pb-10 border border-gray-300"
             style={{ bottom: '80px' }} // Anchor tightly behind the camera body
           >
-            <div className="w-full h-full bg-black/90 animate-pulse" />
+            {/* Photo Area - Shows real image now */}
+            <div className="w-full h-full bg-[#1a1a1a] overflow-hidden relative">
+              {previewUrl && (
+                <img 
+                  src={previewUrl} 
+                  alt="Developing" 
+                  className="w-full h-full object-cover filter contrast-110 brightness-90"
+                />
+              )}
+              {/* Developing overlay effect */}
+              <motion.div 
+                initial={{ opacity: 0.6 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 2 }}
+                className="absolute inset-0 bg-black pointer-events-none mix-blend-multiply"
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

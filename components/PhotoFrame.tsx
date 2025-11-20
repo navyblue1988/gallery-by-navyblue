@@ -37,26 +37,46 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
     setIsResizing(true);
     onFocus(); // Bring to front when resizing starts
 
-    const startX = e.clientX;
+    const element = e.currentTarget as HTMLElement;
+    // Capture pointer to handle fast movements outside the element
+    if (element.setPointerCapture) {
+        element.setPointerCapture(e.pointerId);
+    }
+
+    // Calculate center of the photo frame for distance-based scaling
+    const rect = frameRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Initial distance from center to pointer
+    const startDist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
     const startScale = photo.scale;
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      // Calculate new scale based on horizontal movement relative to base width
-      const scaleChange = deltaX / baseWidth;
-      const newScale = Math.min(Math.max(startScale + scaleChange, MIN_SCALE), MAX_SCALE);
+      moveEvent.preventDefault();
+      const currentDist = Math.hypot(moveEvent.clientX - centerX, moveEvent.clientY - centerY);
+      
+      // Calculate new scale preserving aspect ratio logic (pinch-like feel)
+      // ratio: newDistance / oldDistance
+      const scaleChange = currentDist / startDist;
+      const newScale = Math.min(Math.max(startScale * scaleChange, MIN_SCALE), MAX_SCALE);
       
       onUpdate({ scale: newScale });
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (upEvent: PointerEvent) => {
       setIsResizing(false);
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
+      if (element.releasePointerCapture) {
+          element.releasePointerCapture(upEvent.pointerId);
+      }
+      element.removeEventListener('pointermove', handlePointerMove);
+      element.removeEventListener('pointerup', handlePointerUp);
     };
 
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
+    element.addEventListener('pointermove', handlePointerMove);
+    element.addEventListener('pointerup', handlePointerUp);
   };
 
   return (
@@ -93,6 +113,7 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
       style={{
         width: baseWidth,
         height: baseHeight,
+        touchAction: 'none' // Important for touch devices
       }}
       ref={frameRef}
       onPointerDown={() => onFocus()} // Bring to front on click
@@ -150,13 +171,16 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
         {/* Tape effect */}
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-white/20 rotate-1 pointer-events-none backdrop-blur-sm border border-white/10 shadow-sm" />
 
-        {/* Resize Handle - Only visible on hover/drag */}
+        {/* Resize Handle - Bigger hit area for better UX */}
         <div 
-          className="absolute -bottom-4 -right-4 w-8 h-8 bg-white/10 hover:bg-white/30 rounded-full backdrop-blur-sm flex items-center justify-center cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-50"
+          className="absolute -bottom-5 -right-5 w-14 h-14 flex items-center justify-center cursor-nwse-resize z-50 opacity-0 group-hover:opacity-100 transition-opacity"
           onPointerDown={handleResizeStart}
         >
-          <Maximize2 className="w-4 h-4 text-white/70" />
+          <div className="w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full backdrop-blur-md flex items-center justify-center shadow-sm border border-white/20 transition-colors">
+             <Maximize2 className="w-4 h-4 text-black/70 drop-shadow-sm" />
+          </div>
         </div>
+
       </div>
     </motion.div>
   );

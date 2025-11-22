@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Camera } from './components/Camera';
 import { GalleryWall } from './components/GalleryWall';
 import { Photo } from './types';
 import { fileToGenerativePart, generateImageCaption } from './services/gemini';
+import { playPolaroidSound } from './utils/audio';
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -53,21 +55,24 @@ const App: React.FC = () => {
   };
 
   const handlePhotoSelect = async (file: File) => {
-    // 1. Show in camera immediately
+    // 1. Play Sound immediately
+    playPolaroidSound();
+
+    // 2. Show in camera immediately
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
     setIsProcessing(true);
 
     try {
-      // 2. Start background tasks
+      // 3. Start background tasks
       const orientationPromise = getImageOrientation(objectUrl);
       const base64Promise = fileToGenerativePart(file);
       
-      // 3. Wait for the camera "printing" animation (2.2s)
+      // 4. Wait for the camera "printing" animation (2.2s)
       // This ensures the photo doesn't appear on the wall until it ejects from the camera
       await new Promise(resolve => setTimeout(resolve, 2200));
       
-      // 4. Prepare Photo Data
+      // 5. Prepare Photo Data
       const orientation = await orientationPromise;
       const base64Data = await base64Promise;
 
@@ -91,13 +96,13 @@ const App: React.FC = () => {
         isLiked: false
       };
 
-      // 5. Add to Gallery Wall (Visual handoff)
+      // 6. Add to Gallery Wall (Visual handoff)
       setPhotos(prev => [...prev, newPhoto]);
       
       // Stop camera animation (it will fade out)
       setIsProcessing(false);
 
-      // 6. Fetch Caption (in background after photo is placed)
+      // 7. Fetch Caption (in background after photo is placed)
       try {
         const caption = await generateImageCaption(base64Data);
         

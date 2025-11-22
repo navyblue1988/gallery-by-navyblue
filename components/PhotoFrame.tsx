@@ -105,6 +105,21 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
     element.addEventListener('pointerup', handlePointerUp);
   };
 
+  const getFilterClass = () => {
+    switch (photo.filterType) {
+      case 'leica':
+        // Classic Leica Monochrom look: High contrast B&W, sharp
+        return 'grayscale contrast-[1.25] brightness-95'; 
+      case 'fuji':
+        // Fujifilm Simulation (Velvia/Classic Chrome): High saturation, punchy
+        return 'saturate-[1.3] contrast-110 brightness-105 sepia-[0.05]'; 
+      case 'polaroid':
+      default:
+        // Vintage Instant Film: Warm, faded, slightly soft
+        return 'contrast-110 brightness-95 saturate-[0.85] sepia-[0.15]';
+    }
+  };
+
   return (
     <motion.div
       drag
@@ -160,15 +175,20 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
 
         {/* Image Area */}
         <div className="relative w-full bg-gray-100 overflow-hidden flex-1 border border-black/5">
-          <div className="w-full h-full relative grayscale group-hover:grayscale-0 transition-all duration-700">
+          <div className="w-full h-full relative transition-all duration-700">
              <img 
               src={photo.url} 
               alt="Gallery item" 
-              className="w-full h-full object-cover filter contrast-110 brightness-95"
+              className={`w-full h-full object-cover ${getFilterClass()}`}
               draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent pointer-events-none mix-blend-multiply" />
-            <div className="absolute inset-0 opacity-10 bg-noise pointer-events-none"></div>
+            {photo.filterType === 'polaroid' && (
+              <div className="absolute inset-0 opacity-10 bg-noise pointer-events-none"></div>
+            )}
+             {photo.filterType === 'leica' && (
+              <div className="absolute inset-0 opacity-20 bg-noise pointer-events-none mix-blend-overlay"></div>
+            )}
           </div>
         </div>
 

@@ -1,3 +1,6 @@
+
+export type CameraType = 'polaroid' | 'leica' | 'fuji';
+
 export interface Photo {
   id: string;
   url: string;
@@ -11,6 +14,7 @@ export interface Photo {
   scale: number;
   zIndex: number;
   isLiked?: boolean;
+  filterType: CameraType;
 }
 
 export interface GemniResponse {

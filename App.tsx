@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera } from './components/Camera';
 import { GalleryWall } from './components/GalleryWall';
-import { Photo } from './types';
+import { Photo, CameraType } from './types';
 import { fileToGenerativePart, generateImageCaption } from './services/gemini';
 
 // Simple ID generator
@@ -13,6 +13,7 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [highestZIndex, setHighestZIndex] = useState(100);
+  const [selectedCamera, setSelectedCamera] = useState<CameraType>('leica');
 
   // Load photos from local storage on mount
   useEffect(() => {
@@ -26,7 +27,8 @@ const App: React.FC = () => {
         y: p.y ?? Math.random() * (window.innerHeight - 400),
         scale: p.scale ?? 1,
         zIndex: p.zIndex ?? 1,
-        isLiked: p.isLiked ?? false
+        isLiked: p.isLiked ?? false,
+        filterType: p.filterType ?? 'polaroid' // Default legacy photos to polaroid
       }));
       setPhotos(migrated);
       
@@ -89,7 +91,8 @@ const App: React.FC = () => {
         y: initialY,
         scale: 1,
         zIndex: newZIndex,
-        isLiked: false
+        isLiked: false,
+        filterType: selectedCamera // Apply current camera's filter
       };
 
       // 5. Add to Gallery Wall (Visual handoff)
@@ -163,13 +166,15 @@ const App: React.FC = () => {
       {/* Bottom Camera Control Area */}
       <footer className="fixed bottom-0 left-0 w-full h-auto z-50 pointer-events-none flex flex-col justify-end pb-8">
          {/* Subtle gradient to fade out bottom photos behind controls */}
-         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent h-48 mt-auto top-auto bottom-0 pointer-events-none"></div>
+         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-transparent h-64 mt-auto top-auto bottom-0 pointer-events-none"></div>
          
          <div className="pointer-events-auto w-full flex justify-center pb-4 scale-90 md:scale-100 origin-bottom">
             <Camera 
               onPhotoSelect={handlePhotoSelect} 
               isProcessing={isProcessing} 
               previewUrl={previewImage}
+              cameraType={selectedCamera}
+              onSwitchCamera={setSelectedCamera}
             />
          </div>
       </footer>

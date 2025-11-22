@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { Camera as CameraIcon, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -125,18 +126,6 @@ export const Camera: React.FC<CameraProps> = ({ onPhotoSelect, isProcessing, pre
                 </div>
              </div>
         </div>
-
-        {/* Flash Effect Overlay */}
-        <AnimatePresence>
-            {isProcessing && (
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 1, 0] }}
-                    transition={{ duration: 0.1, delay: 0.1 }}
-                    className="fixed inset-0 bg-white z-50 pointer-events-none mix-blend-overlay"
-                />
-            )}
-        </AnimatePresence>
 
       </motion.div>
       
